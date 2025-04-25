@@ -4,15 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pastor Sermon App</title>
-    <!-- Remove Tailwind CDN -->
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <!-- Tailwind CSS -->
     <link rel="stylesheet" href="tailwind.css">
-    <!-- AWS Amplify CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/aws-amplify@5.0.0/dist/aws-amplify.min.js"></script>
+    <!-- AWS Amplify CDN with fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/aws-amplify@6.0.0/dist/aws-amplify.min.js"></script>
+    <script>
+      // Fallback if Amplify CDN fails
+      if (!window.Amplify) {
+        document.write('<script src="https://unpkg.com/aws-amplify@6.0.0/dist/aws-amplify.min.js">/script>');
+      }
+    </script>
     <!-- React CDNs -->
-    <!-- Replace development versions with production versions -->
-<script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
     <!-- Babel for JSX -->
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.5/babel.min.js"></script>
   </head>
