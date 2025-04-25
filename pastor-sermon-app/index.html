@@ -5,6 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pastor Sermon App</title>
   <script src="https://cdn.jsdelivr.net/npm/aws-amplify@5.0.0/dist/aws-amplify.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    #app {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    input, button {
+      margin: 10px 0;
+      padding: 8px;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #status, #results {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
   <h1>Pastor Sermon App</h1>
@@ -17,7 +55,7 @@
     <div id="results"></div>
   </div>
   <script>
-    Amplify.configure({
+     Amplify.configure({
       Auth: {
         region: 'us-east-2',
         userPoolId: 'us-east-2_KBk0cHpFF', 
@@ -40,9 +78,17 @@
       const file = fileInput.files[0];
       if (!file) return alert('Please select a file');
       document.getElementById('status').innerText = 'Uploading...';
-      // Add your upload logic here
-      document.getElementById('status').innerText = 'Upload complete! Processing...';
-      setTimeout(fetchResults, 300000); // Check results after 5 minutes
+
+      try {
+        await API.post('SermonAPI', '/sermons', {
+          body: { sermonId: 'test-sermon.mp3', fileName: file.name }
+        });
+        document.getElementById('status').innerText = 'Upload complete! Processing...';
+        setTimeout(fetchResults, 300000); // Check results after 5 minutes
+      } catch (error) {
+        console.error('Error uploading sermon:', error);
+        document.getElementById('status').innerText = 'Upload failed.';
+      }
     }
 
     async function fetchResults() {
