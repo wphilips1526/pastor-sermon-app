@@ -1,1 +1,0 @@
-# pastor-sermon-app
