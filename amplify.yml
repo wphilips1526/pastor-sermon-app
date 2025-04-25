@@ -3,15 +3,13 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd PastorSermonApp
-        - npm install
+        - echo "Skipping preBuild for now"
     build:
       commands:
-        - npm run build
+        - echo "Minimal build step"
   artifacts:
-    baseDirectory: PastorSermonApp
+    baseDirectory: pastor-sermon-app
     files:
       - '**/*'
   cache:
-    paths:
-      - node_modules/**/*
+    paths: []
