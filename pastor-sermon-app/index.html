@@ -4,9 +4,60 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pastor Sermon App</title>
+  <script src="https://cdn.jsdelivr.net/npm/aws-amplify@5.0.0/dist/aws-amplify.min.js"></script>
 </head>
 <body>
-  <h1>Welcome to Pastor Sermon App</h1>
-  <p>This is a test page to confirm deployment.</p>
+  <h1>Pastor Sermon App</h1>
+  <div id="app">
+    <h2>Upload a Sermon</h2>
+    <input type="file" id="sermonFile" accept=".mp3">
+    <button onclick="uploadSermon()">Upload</button>
+    <div id="status"></div>
+    <h2>Style Analysis Results</h2>
+    <div id="results"></div>
+  </div>
+  <script>
+    Amplify.configure({
+      Auth: {
+        region: 'us-east-2',
+        userPoolId: 'us-east-2_KBk0cHpFF', 
+        userPoolWebClientId: '5gh21blio98pennr22qcvjbjpc', 
+        identityPoolId: 'us-east-2:3d2818f4-2cb3-4b46-9584-42c68696ba7c' 
+      },
+      API: {
+        endpoints: [
+          {
+            name: 'SermonAPI',
+            endpoint: 'your-api-gateway-endpoint',
+            region: 'us-east-2'
+          }
+        ]
+      }
+    });
+
+    async function uploadSermon() {
+      const fileInput = document.getElementById('sermonFile');
+      const file = fileInput.files[0];
+      if (!file) return alert('Please select a file');
+      document.getElementById('status').innerText = 'Uploading...';
+      // Add your upload logic here
+      document.getElementById('status').innerText = 'Upload complete! Processing...';
+      setTimeout(fetchResults, 300000); // Check results after 5 minutes
+    }
+
+    async function fetchResults() {
+      try {
+        const response = await API.get('SermonAPI', '/sermons/test-sermon.mp3');
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `
+          <p><strong>Sentiment:</strong> ${response.Sentiment}</p>
+          <p><strong>Key Phrases:</strong> ${response.KeyPhrases.join(', ')}</p>
+        `;
+      } catch (error) {
+        console.error('Error fetching results:', error);
+        document.getElementById('results').innerText = 'Error fetching results.';
+      }
+    }
+  </script>
 </body>
 </html>
