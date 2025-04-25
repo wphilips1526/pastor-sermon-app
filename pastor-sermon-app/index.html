@@ -4,106 +4,229 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pastor Sermon App</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- AWS Amplify CDN -->
   <script src="https://cdn.jsdelivr.net/npm/aws-amplify@5.0.0/dist/aws-amplify.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    h1, h2 {
-      color: #333;
-    }
-    #app {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    input, button {
-      margin: 10px 0;
-      padding: 8px;
-      font-size: 16px;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    #status, #results {
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-  </style>
+  <!-- React CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <!-- Babel for JSX -->
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.5/babel.min.js"></script>
 </head>
-<body>
-  <h1>Pastor Sermon App</h1>
-  <div id="app">
-    <h2>Upload a Sermon</h2>
-    <input type="file" id="sermonFile" accept=".mp3">
-    <button onclick="uploadSermon()">Upload</button>
-    <div id="status"></div>
-    <h2>Style Analysis Results</h2>
-    <div id="results"></div>
-  </div>
-  <script>
-     Amplify.configure({
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div id="root" class="w-full max-w-4xl p-6"></div>
+  <script type="text/babel">
+    // Configure Amplify
+    Amplify.configure({
       Auth: {
         region: 'us-east-2',
         userPoolId: 'us-east-2_KBk0cHpFF', 
         userPoolWebClientId: '5gh21blio98pennr22qcvjbjpc', 
         identityPoolId: 'us-east-2:3d2818f4-2cb3-4b46-9584-42c68696ba7c' 
       },
-      API: {
-        endpoints: [
-          {
-            name: 'SermonAPI',
-            endpoint: 'your-api-gateway-endpoint',
-            region: 'us-east-2'
+  API: {
+    endpoints: [
+      {
+        name: 'SermonAPI',
+        endpoint: 'https://your-api-id.execute-api.us-east-2.amazonaws.com/prod',
+        region: 'us-east-2'
+      }
+    ]
+  }
+});
           }
         ]
       }
     });
 
-    async function uploadSermon() {
-      const fileInput = document.getElementById('sermonFile');
-      const file = fileInput.files[0];
-      if (!file) return alert('Please select a file');
-      document.getElementById('status').innerText = 'Uploading...';
+    // Sign-in Component
+    const SignIn = ({ onSignIn }) => {
+      const [email, setEmail] = React.useState('');
+      const [password, setPassword] = React.useState('');
+      const [error, setError] = React.useState('');
 
-      try {
-        await API.post('SermonAPI', '/sermons', {
-          body: { sermonId: 'test-sermon.mp3', fileName: file.name }
-        });
-        document.getElementById('status').innerText = 'Upload complete! Processing...';
-        setTimeout(fetchResults, 300000); // Check results after 5 minutes
-      } catch (error) {
-        console.error('Error uploading sermon:', error);
-        document.getElementById('status').innerText = 'Upload failed.';
-      }
-    }
+      const handleSignIn = async (e) => {
+        e.preventDefault();
+        try {
+          await Auth.signIn(email, password);
+          onSignIn();
+        } catch (err) {
+          setError('Failed to sign in. Please check your credentials.');
+          console.error('Sign-in error:', err);
+        }
+      };
 
-    async function fetchResults() {
-      try {
-        const response = await API.get('SermonAPI', '/sermons/test-sermon.mp3');
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = `
-          <p><strong>Sentiment:</strong> ${response.Sentiment}</p>
-          <p><strong>Key Phrases:</strong> ${response.KeyPhrases.join(', ')}</p>
-        `;
-      } catch (error) {
-        console.error('Error fetching results:', error);
-        document.getElementById('results').innerText = 'Error fetching results.';
+      return (
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold mb-4 text-center">Sign In</h2>
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+          <div className="space-y-4">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={handleSignIn}
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    // Main App Component
+    const App = () => {
+      const [user, setUser] = React.useState(null);
+      const [file, setFile] = React.useState(null);
+      const [status, setStatus] = React.useState('');
+      const [results, setResults] = React.useState(null);
+      const [history, setHistory] = React.useState([]);
+
+      // Check if user is signed in on mount
+      React.useEffect(() => {
+        Auth.currentAuthenticatedUser()
+          .then((user) => setUser(user))
+          .catch(() => setUser(null));
+      }, []);
+
+      // Fetch sermon history
+      const fetchHistory = async () => {
+        try {
+          const response = await API.get('SermonAPI', '/sermons/history');
+          setHistory(response || []);
+        } catch (error) {
+          console.error('Error fetching history:', error);
+          setHistory([]);
+        }
+      };
+
+      const handleSignIn = () => {
+        Auth.currentAuthenticatedUser()
+          .then((user) => {
+            setUser(user);
+            fetchHistory();
+          })
+          .catch(() => setUser(null));
+      };
+
+      const handleSignOut = async () => {
+        try {
+          await Auth.signOut();
+          setUser(null);
+          setHistory([]);
+        } catch (error) {
+          console.error('Sign-out error:', error);
+        }
+      };
+
+      const handleUpload = async () => {
+        if (!file) {
+          setStatus('Please select a file.');
+          return;
+        }
+        setStatus('Uploading...');
+        try {
+          await API.post('SermonAPI', '/sermons', {
+            body: { sermonId: file.name, fileName: file.name }
+          });
+          setStatus('Upload complete! Processing...');
+          setTimeout(fetchResults, 300000); // Check results after 5 minutes
+        } catch (error) {
+          console.error('Error uploading sermon:', error);
+          setStatus('Upload failed.');
+        }
+      };
+
+      const fetchResults = async () => {
+        try {
+          const response = await API.get('SermonAPI', `/sermons/${file.name}`);
+          setResults(response);
+          fetchHistory(); // Refresh history after new analysis
+        } catch (error) {
+          console.error('Error fetching results:', error);
+          setStatus('Error fetching results.');
+        }
+      };
+
+      if (!user) {
+        return <SignIn onSignIn={handleSignIn} />;
       }
-    }
+
+      return (
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Pastor Sermon App</h2>
+            <button
+              onClick={handleSignOut}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+            >
+              Sign Out
+            </button>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold mb-2">Upload a Sermon</h3>
+            <input
+              type="file"
+              accept=".mp3"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="w-full p-2 border rounded mb-2"
+            />
+            <button
+              onClick={handleUpload}
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+            >
+              Upload
+            </button>
+            {status && <p className="mt-2 text-gray-600">{status}</p>}
+          </div>
+
+          {results && (
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold mb-2">Style Analysis Results</h3>
+              <div className="p-4 bg-gray-50 rounded border">
+                <p><strong>Sentiment:</strong> {results.Sentiment}</p>
+                <p><strong>Key Phrases:</strong> {results.KeyPhrases.join(', ')}</p>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Sermon History</h3>
+            {history.length > 0 ? (
+              <ul className="space-y-2">
+                {history.map((sermon) => (
+                  <li key={sermon.SermonID} className="p-4 bg-gray-50 rounded border">
+                    <p><strong>Sermon:</strong> {sermon.SermonID}</p>
+                    <p><strong>Sentiment:</strong> {sermon.Sentiment}</p>
+                    <p><strong>Key Phrases:</strong> {sermon.KeyPhrases.join(', ')}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No sermons analyzed yet.</p>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    // Render the App
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
   </script>
 </body>
 </html>
