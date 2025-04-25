@@ -17,216 +17,244 @@
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
   <div id="root" class="w-full max-w-4xl p-6"></div>
   <script type="text/babel">
-    // Configure Amplify
-    Amplify.configure({
+    // Wait for all scripts to load
+    window.onload = function () {
+      if (typeof Amplify === 'undefined') {
+        console.error('Amplify library not loaded');
+        document.getElementById('root').innerHTML = '<h1 class="text-red-500">Error: Amplify library not loaded</h1>';
+        return;
+      }
+
+      // Configure Amplify
+      Amplify.configure({
       Auth: {
         region: 'us-east-2',
         userPoolId: 'us-east-2_KBk0cHpFF', 
         userPoolWebClientId: '5gh21blio98pennr22qcvjbjpc', 
-        identityPoolId: 'us-east-2:3d2818f4-2cb3-4b46-9584-42c68696ba7c' 
-      },
-  API: {
-    endpoints: [
-      {
-        name: 'SermonAPI',
-        endpoint: 'https://hyyjdgnez8.execute-api.us-east-2.amazonaws.com/prod',
-        region: 'us-east-2'
-      }
-    ]
-  }
-});
-          
-        
-      
-    ;
+        identityPoolId: 'us-east-2:3d2818f4-2cb3-4b46-9584-42c68696ba7c'
 
-    // Sign-in Component
-    const SignIn = ({ onSignIn }) => {
-      const [email, setEmail] = React.useState('');
-      const [password, setPassword] = React.useState('');
-      const [error, setError] = React.useState('');
-
-      const handleSignIn = async (e) => {
-        e.preventDefault();
-        try {
-          await Auth.signIn(email, password);
-          onSignIn();
-        } catch (err) {
-          setError('Failed to sign in. Please check your credentials.');
-          console.error('Sign-in error:', err);
+        },
+        API: {
+          endpoints: [
+            {
+              name: 'SermonAPI',
+              endpoint: 'https://hyyjdgnez8.execute-api.us-east-2.amazonaws.com/prod',
+              region: 'us-east-2'
+            }
+          ]
         }
-      };
+      });
 
-      return (
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4 text-center">Sign In</h2>
-          {error && <p className="text-red-500 mb-4">{error}</p>}
-          <div className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={handleSignIn}
-              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-      );
-    };
+      // Error Boundary Component
+      class ErrorBoundary extends React.Component {
+        state = { hasError: false, error: null };
 
-    // Main App Component
-    const App = () => {
-      const [user, setUser] = React.useState(null);
-      const [file, setFile] = React.useState(null);
-      const [status, setStatus] = React.useState('');
-      const [results, setResults] = React.useState(null);
-      const [history, setHistory] = React.useState([]);
-
-      // Check if user is signed in on mount
-      React.useEffect(() => {
-        Auth.currentAuthenticatedUser()
-          .then((user) => setUser(user))
-          .catch(() => setUser(null));
-      }, []);
-
-      // Fetch sermon history
-      const fetchHistory = async () => {
-        try {
-          const response = await API.get('SermonAPI', '/sermons/history');
-          setHistory(response || []);
-        } catch (error) {
-          console.error('Error fetching history:', error);
-          setHistory([]);
+        static getDerivedStateFromError(error) {
+          return { hasError: true, error };
         }
-      };
 
-      const handleSignIn = () => {
-        Auth.currentAuthenticatedUser()
-          .then((user) => {
-            setUser(user);
-            fetchHistory();
-          })
-          .catch(() => setUser(null));
-      };
-
-      const handleSignOut = async () => {
-        try {
-          await Auth.signOut();
-          setUser(null);
-          setHistory([]);
-        } catch (error) {
-          console.error('Sign-out error:', error);
+        componentDidCatch(error, errorInfo) {
+          console.error("Rendering error:", error, errorInfo);
         }
-      };
 
-      const handleUpload = async () => {
-        if (!file) {
-          setStatus('Please select a file.');
-          return;
+        render() {
+          if (this.state.hasError) {
+            return <h1 className="text-red-500">Something went wrong: {this.state.error.message}</h1>;
+          }
+          return this.props.children;
         }
-        setStatus('Uploading...');
-        try {
-          await API.post('SermonAPI', '/sermons', {
-            body: { sermonId: file.name, fileName: file.name }
-          });
-          setStatus('Upload complete! Processing...');
-          setTimeout(fetchResults, 300000); // Check results after 5 minutes
-        } catch (error) {
-          console.error('Error uploading sermon:', error);
-          setStatus('Upload failed.');
-        }
-      };
-
-      const fetchResults = async () => {
-        try {
-          const response = await API.get('SermonAPI', `/sermons/${file.name}`);
-          setResults(response);
-          fetchHistory(); // Refresh history after new analysis
-        } catch (error) {
-          console.error('Error fetching results:', error);
-          setStatus('Error fetching results.');
-        }
-      };
-
-      if (!user) {
-        return <SignIn onSignIn={handleSignIn} />;
       }
 
-      return (
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Pastor Sermon App</h2>
-            <button
-              onClick={handleSignOut}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-            >
-              Sign Out
-            </button>
-          </div>
+      // Sign-in Component
+      const SignIn = ({ onSignIn }) => {
+        const [email, setEmail] = React.useState('');
+        const [password, setPassword] = React.useState('');
+        const [error, setError] = React.useState('');
 
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-2">Upload a Sermon</h3>
-            <input
-              type="file"
-              accept=".mp3"
-              onChange={(e) => setFile(e.target.files[0])}
-              className="w-full p-2 border rounded mb-2"
-            />
-            <button
-              onClick={handleUpload}
-              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
-            >
-              Upload
-            </button>
-            {status && <p className="mt-2 text-gray-600">{status}</p>}
-          </div>
+        const handleSignIn = async (e) => {
+          e.preventDefault();
+          try {
+            await Auth.signIn(email, password);
+            onSignIn();
+          } catch (err) {
+            setError('Failed to sign in. Please check your credentials.');
+            console.error('Sign-in error:', err);
+          }
+        };
 
-          {results && (
-            <div className="mb-6">
-              <h3 className="text-xl font-semibold mb-2">Style Analysis Results</h3>
-              <div className="p-4 bg-gray-50 rounded border">
-                <p><strong>Sentiment:</strong> {results.Sentiment}</p>
-                <p><strong>Key Phrases:</strong> {results.KeyPhrases.join(', ')}</p>
-              </div>
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold mb-4 text-center">Sign In</h2>
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+            <div className="space-y-4">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleSignIn}
+                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+              >
+                Sign In
+              </button>
             </div>
-          )}
-
-          <div>
-            <h3 className="text-xl font-semibold mb-2">Sermon History</h3>
-            {history.length > 0 ? (
-              <ul className="space-y-2">
-                {history.map((sermon) => (
-                  <li key={sermon.SermonID} className="p-4 bg-gray-50 rounded border">
-                    <p><strong>Sermon:</strong> {sermon.SermonID}</p>
-                    <p><strong>Sentiment:</strong> {sermon.Sentiment}</p>
-                    <p><strong>Key Phrases:</strong> {sermon.KeyPhrases.join(', ')}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No sermons analyzed yet.</p>
-            )}
           </div>
-        </div>
+        );
+      };
+
+      // Main App Component
+      const App = () => {
+        const [user, setUser] = React.useState(null);
+        const [file, setFile] = React.useState(null);
+        const [status, setStatus] = React.useState('');
+        const [results, setResults] = React.useState(null);
+        const [history, setHistory] = React.useState([]);
+
+        React.useEffect(() => {
+          Auth.currentAuthenticatedUser()
+            .then((user) => setUser(user))
+            .catch(() => setUser(null));
+        }, []);
+
+        const fetchHistory = async () => {
+          try {
+            const response = await API.get('SermonAPI', '/sermons/history');
+            setHistory(response || []);
+          } catch (error) {
+            console.error('Error fetching history:', error);
+            setHistory([]);
+          }
+        };
+
+        const handleSignIn = () => {
+          Auth.currentAuthenticatedUser()
+            .then((user) => {
+              setUser(user);
+              fetchHistory();
+            })
+            .catch(() => setUser(null));
+        };
+
+        const handleSignOut = async () => {
+          try {
+            await Auth.signOut();
+            setUser(null);
+            setHistory([]);
+          } catch (error) {
+            console.error('Sign-out error:', error);
+          }
+        };
+
+        const handleUpload = async () => {
+          if (!file) {
+            setStatus('Please select a file.');
+            return;
+          }
+          setStatus('Uploading...');
+          try {
+            await API.post('SermonAPI', '/sermons', {
+              body: { sermonId: file.name, fileName: file.name }
+            });
+            setStatus('Upload complete! Processing...');
+            setTimeout(fetchResults, 300000);
+          } catch (error) {
+            console.error('Error uploading sermon:', error);
+            setStatus('Upload failed.');
+          }
+        };
+
+        const fetchResults = async () => {
+          try {
+            const response = await API.get('SermonAPI', `/sermons/${file.name}`);
+            setResults(response);
+            fetchHistory();
+          } catch (error) {
+            console.error('Error fetching results:', error);
+            setStatus('Error fetching results.');
+          }
+        };
+
+        if (!user) {
+          return <SignIn onSignIn={handleSignIn} />;
+        }
+
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Pastor Sermon App</h2>
+              <button
+                onClick={handleSignOut}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+              >
+                Sign Out
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold mb-2">Upload a Sermon</h3>
+              <input
+                type="file"
+                accept=".mp3"
+                onChange={(e) => setFile(e.target.files[0])}
+                className="w-full p-2 border rounded mb-2"
+              />
+              <button
+                onClick={handleUpload}
+                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+              >
+                Upload
+              </button>
+              {status && <p className="mt-2 text-gray-600">{status}</p>}
+            </div>
+
+            {results && (
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-2">Style Analysis Results</h3>
+                <div className="p-4 bg-gray-50 rounded border">
+                  <p><strong>Sentiment:</strong> {results.Sentiment}</p>
+                  <p><strong>Key Phrases:</strong> {results.KeyPhrases.join(', ')}</p>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Sermon History</h3>
+              {history.length > 0 ? (
+                <ul className="space-y-2">
+                  {history.map((sermon) => (
+                    <li key={sermon.SermonID} className="p-4 bg-gray-50 rounded border">
+                      <p><strong>Sermon:</strong> {sermon.SermonID}</p>
+                      <p><strong>Sentiment:</strong> {sermon.Sentiment}</p>
+                      <p><strong>Key Phrases:</strong> {sermon.KeyPhrases.join(', ')}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No sermons analyzed yet.</p>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      // Render the App with Error Boundary
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       );
     };
-
-    // Render the App
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
   </script>
 </body>
 </html>
