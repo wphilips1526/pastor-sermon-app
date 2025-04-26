@@ -1,6 +1,5 @@
 import { Amplify, Auth, API } from 'aws-amplify';
 
-// Configure Amplify at the top of the file
 Amplify.configure({
   Auth: {
     region: 'us-east-2',
@@ -13,8 +12,8 @@ Amplify.configure({
     endpoints: [
       {
         name: 'SermonAPI',
-        endpoint: 'https://your-api-id.execute-api.us-east-2.amazonaws.com/prod',
-        region: 'us-east-2'
+        endpoint: 'https://hyyjdgnez8.execute-api.us-east-2.amazonaws.com/prod',
+        region: 'us-east-2PLUGIN_EXTENSION'
       }
     ]
   }
@@ -218,3 +217,10 @@ const App = () => {
     </div>
   );
 };
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
