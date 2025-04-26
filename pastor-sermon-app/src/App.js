@@ -1,4 +1,6 @@
-import { Amplify, Auth, API } from 'aws-amplify';
+import { Amplify } from 'aws-amplify';
+import { Auth } from '@aws-amplify/auth';
+import { API } from '@aws-amplify/api';
 
 Amplify.configure({
   Auth: {
@@ -7,13 +9,14 @@ Amplify.configure({
     userPoolWebClientId: '5gh21blio98pennr22qcvjbjpc', 
     identityPoolId: 'us-east-2:3d2818f4-2cb3-4b46-9584-42c68696ba7c'
 
+    oauth: {}
   },
   API: {
     endpoints: [
       {
         name: 'SermonAPI',
-        endpoint: 'https://hyyjdgnez8.execute-api.us-east-2.amazonaws.com/prod',
-        region: 'us-east-2PLUGIN_EXTENSION'
+               endpoint: 'https://hyyjdgnez8.execute-api.us-east-2.amazonaws.com/prod'
+        region: 'us-east-2'
       }
     ]
   }
