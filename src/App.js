@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Amplify } from 'aws-amplify';
-import { Storage } from '@aws-amplify/storage';
+import { getCurrentUser } from '@aws-amplify/auth';
+import { uploadData } from '@aws-amplify/storage';
 import { withAuthenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import awsExports from './aws-exports';
 
+// Initialize Amplify
 Amplify.configure(awsExports);
 
 function App() {
@@ -12,14 +14,24 @@ function App() {
   const [title, setTitle] = useState('');
   const [theme, setTheme] = useState('');
 
+  useEffect(() => {
+    getCurrentUser()
+      .then(user => console.log('Authenticated user:', user))
+      .catch(err => console.error('Auth error:', err));
+  }, []);
+
   const handleUpload = async () => {
     if (!file) return alert('Please select a file');
     try {
       console.log('Uploading file:', file.name);
-      const result = await Storage.put(`sermons/${file.name}`, file, {
-        metadata: { title, theme },
-        contentType: file.type,
-      });
+      const result = await uploadData({
+        key: `sermons/${file.name}`,
+        data: file,
+        options: {
+          metadata: { title, theme },
+          contentType: file.type,
+        },
+      }).result;
       console.log('Upload result:', result);
       alert('Sermon uploaded successfully!');
       setFile(null);
