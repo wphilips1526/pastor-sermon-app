@@ -1,0 +1,26 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-pastorsermonapp-dev-13ea2-authRole",
+      "UnauthRoleArn": "arn:aws:iam::736747803139:role/amplify-pastorsermonapp-dev-13ea2-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::736747803139:role/amplify-pastorsermonapp-dev-13ea2-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-pastorsermonapp-dev-13ea2-deployment",
+      "UnauthRoleName": "amplify-pastorsermonapp-dev-13ea2-unauthRole",
+      "StackName": "amplify-pastorsermonapp-dev-13ea2",
+      "StackId": "arn:aws:cloudformation:us-east-1:736747803139:stack/amplify-pastorsermonapp-dev-13ea2/a20abed0-26d8-11f0-aa4a-0e67775896cb",
+      "AmplifyAppId": "d10gioboyjlhhi"
+    },
+    "categories": {
+      "auth": {
+        "pastorsermonapp0a00a940": {}
+      },
+      "storage": {
+        "sermonStorage": {}
+      },
+      "hosting": {
+        "S3AndCloudFront": {}
+      }
+    }
+  }
+}

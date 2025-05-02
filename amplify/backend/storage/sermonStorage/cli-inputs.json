@@ -1,0 +1,14 @@
+{
+  "resourceName": "sermonStorage",
+  "policyUUID": "a137163c",
+  "bucketName": "my-sermon-app",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}
