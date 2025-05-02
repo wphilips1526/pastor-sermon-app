@@ -48,6 +48,7 @@
     ]
   },
   "devDependencies": {
+    "@aws-amplify/backend": "^1.16.0",
     "@aws-amplify/backend-cli": "^1.7.0"
   }
 }
