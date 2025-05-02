@@ -1,3 +1,5 @@
+mkdir -p amplify/functions/transcribe-sermon
+cat << 'EOF' > amplify/functions/transcribe-sermon/resource.ts
 import { defineFunction } from '@aws-amplify/backend';
 
 export const transcribeSermon = defineFunction({
@@ -11,3 +13,4 @@ export const transcribeSermon = defineFunction({
     REGION: 'us-east-1',
   },
 });
+EOF

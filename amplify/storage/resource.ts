@@ -1,3 +1,5 @@
+mkdir -p amplify/storage
+cat << 'EOF' > amplify/storage/resource.ts
 import { defineStorage } from '@aws-amplify/backend';
 
 export const storage = defineStorage({
@@ -7,3 +9,4 @@ export const storage = defineStorage({
     'transcripts/*': [allow.authenticated.to(['read'])],
   }),
 });
+EOF
